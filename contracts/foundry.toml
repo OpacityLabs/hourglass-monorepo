@@ -4,3 +4,11 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+remappings = [
+    "@hourglass-monorepo/contracts/=lib/hourglass-monorepo/contracts/",
+    "forge-std/=lib/forge-std/src/",
+    "@eigenlayer-middleware/=lib/hourglass-monorepo/contracts/lib/eigenlayer-middleware/",
+    "@eigenlayer-contracts/=lib/hourglass-monorepo/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/",
+    "@openzeppelin/=lib/hourglass-monorepo/contracts/lib/eigenlayer-middleware/lib/openzeppelin-contracts/",
+    "@openzeppelin-upgrades/=lib/hourglass-monorepo/contracts/lib/eigenlayer-middleware/lib/openzeppelin-contracts-upgradeable/"
+]
