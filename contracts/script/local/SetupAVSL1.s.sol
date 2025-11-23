@@ -58,8 +58,8 @@ contract SetupAVSL1 is Script {
         vm.serializeAddress(json, "avs", avs);
         vm.serializeAddress(json, "taskAVSRegistrar", taskAVSRegistrar);
         vm.serializeString(json, "avsMetadataUri", avsMetadataUri);
-        vm.serializeAddress(json, "strategy", address(strategy));
-        vm.writeJson(json, outputPath);
+        string memory finalJson = vm.serializeAddress(json, "strategy", address(strategy));
+        vm.writeJson(finalJson, outputPath);
         console.log("Setup results written to:", outputPath);
     }
 }
