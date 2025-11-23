@@ -16,7 +16,7 @@ contract SetupAVSL1 is Script {
     function run() public {
         // Load addresses from environment variables
         IAllocationManager allocationManager = IAllocationManager(vm.envAddress("ALLOCATION_MANAGER_ADDRESS"));
-        IStrategy strategySteth = IStrategy(vm.envAddress("STRATEGY_STETH_ADDRESS"));
+        IStrategy strategy = IStrategy(vm.envAddress("STRATEGY_ADDRESS"));
         address taskAVSRegistrar = vm.envAddress("TASK_AVS_REGISTRAR_ADDRESS");
         string memory avsMetadataUri = vm.envString("AVS_METADATA_URI");
         string memory outputPath = vm.envString("OUTPUT_JSON_PATH");
@@ -38,12 +38,12 @@ contract SetupAVSL1 is Script {
 
         // 3. Create the operator sets
         IStrategy[] memory strategies = new IStrategy[](1);
-        strategies[0] = strategySteth;
+        strategies[0] = strategy;
         IAllocationManagerTypes.CreateSetParams[] memory createOperatorSetParams =
             new IAllocationManagerTypes.CreateSetParams[](1);
 
         IStrategy[] memory opsetZero = new IStrategy[](1);
-        opsetZero[0] = strategySteth;
+        opsetZero[0] = strategy;
 
         createOperatorSetParams[0] = IAllocationManagerTypes.CreateSetParams({operatorSetId: 0, strategies: opsetZero});
 
@@ -58,7 +58,7 @@ contract SetupAVSL1 is Script {
         vm.serializeAddress(json, "avs", avs);
         vm.serializeAddress(json, "taskAVSRegistrar", taskAVSRegistrar);
         vm.serializeString(json, "avsMetadataUri", avsMetadataUri);
-        vm.serializeAddress(json, "strategy", address(strategySteth));
+        vm.serializeAddress(json, "strategy", address(strategy));
         vm.writeJson(json, outputPath);
         console.log("Setup results written to:", outputPath);
     }
