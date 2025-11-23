@@ -14,17 +14,16 @@ import {MockTaskAVSRegistrar} from "@eigenlayer-middleware/test/mocks/MockTaskAV
 import {ITaskAVSRegistrarBaseTypes} from "@eigenlayer-middleware/src/interfaces/ITaskAVSRegistrarBase.sol";
 
 contract DeployAVSL1Contracts is Script {
-    // Eigenlayer Core Contracts (Mainnet)
-    IAllocationManager public ALLOCATION_MANAGER = IAllocationManager(0x948a420b8CC1d6BFd0B6087C2E7c344a2CD0bc39);
-    IKeyRegistrar public KEY_REGISTRAR = IKeyRegistrar(0x54f4bC6bDEbe479173a2bbDc31dD7178408A57A4);
-    IPermissionController public PERMISSION_CONTROLLER =
-        IPermissionController(0x25E5F8B1E7aDf44518d35D5B2271f114e081f0E5);
-
     function setUp() public {}
 
-    function run(
-        address avs
-    ) public {
+    function run() public {
+        // Load addresses from environment variables
+        IAllocationManager allocationManager = IAllocationManager(vm.envAddress("ALLOCATION_MANAGER_ADDRESS"));
+        IKeyRegistrar keyRegistrar = IKeyRegistrar(vm.envAddress("KEY_REGISTRAR_ADDRESS"));
+        IPermissionController permissionController = IPermissionController(vm.envAddress("PERMISSION_CONTROLLER_ADDRESS"));
+        address avs = vm.envAddress("AVS_ADDRESS");
+        string memory outputPath = vm.envString("OUTPUT_JSON_PATH");
+
         // Load the private key from the environment variable
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER");
         address deployer = vm.addr(deployerPrivateKey);
@@ -46,7 +45,7 @@ contract DeployAVSL1Contracts is Script {
 
         // Deploy implementation
         MockTaskAVSRegistrar taskAVSRegistrarImpl =
-            new MockTaskAVSRegistrar(ALLOCATION_MANAGER, KEY_REGISTRAR, PERMISSION_CONTROLLER);
+            new MockTaskAVSRegistrar(allocationManager, keyRegistrar, permissionController);
         console.log("TaskAVSRegistrar implementation deployed to:", address(taskAVSRegistrarImpl));
 
         // Deploy proxy with initialization
@@ -61,5 +60,15 @@ contract DeployAVSL1Contracts is Script {
         proxyAdmin.transferOwnership(avs);
 
         vm.stopBroadcast();
+
+        // Write deployment results to JSON file
+        string memory json = "deployment";
+        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeAddress(json, "avs", avs);
+        vm.serializeAddress(json, "proxyAdmin", address(proxyAdmin));
+        vm.serializeAddress(json, "taskAVSRegistrarImplementation", address(taskAVSRegistrarImpl));
+        string memory finalJson = vm.serializeAddress(json, "taskAVSRegistrarProxy", address(proxy));
+        vm.writeJson(finalJson, outputPath);
+        console.log("Deployment results written to:", outputPath);
     }
 }

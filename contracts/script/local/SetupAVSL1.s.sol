@@ -11,18 +11,17 @@ import {IAVSRegistrar} from "@eigenlayer-contracts/src/contracts/interfaces/IAVS
 import {IStrategy} from "@eigenlayer-contracts/src/contracts/interfaces/IStrategy.sol";
 
 contract SetupAVSL1 is Script {
-    // Eigenlayer Core Contracts (Mainnet)
-    IAllocationManager public ALLOCATION_MANAGER = IAllocationManager(0x948a420b8CC1d6BFd0B6087C2E7c344a2CD0bc39);
-
-    // Eigenlayer Strategies (Mainnet)
-    IStrategy public STRATEGY_WETH = IStrategy(0x0Fe4F44beE93503346A3Ac9EE5A26b130a5796d6); // swETH strategy
-    IStrategy public STRATEGY_STETH = IStrategy(0x93c4b944D05dfe6df7645A86cd2206016c51564D);
-
     function setUp() public {}
 
-    function run(
-        address taskAVSRegistrar
-    ) public {
+    function run() public {
+        // Load addresses from environment variables
+        IAllocationManager allocationManager = IAllocationManager(vm.envAddress("ALLOCATION_MANAGER_ADDRESS"));
+        IStrategy strategyWeth = IStrategy(vm.envAddress("STRATEGY_WETH_ADDRESS"));
+        IStrategy strategySteth = IStrategy(vm.envAddress("STRATEGY_STETH_ADDRESS"));
+        address taskAVSRegistrar = vm.envAddress("TASK_AVS_REGISTRAR_ADDRESS");
+        string memory avsMetadataUri = vm.envString("AVS_METADATA_URI");
+        string memory outputPath = vm.envString("OUTPUT_JSON_PATH");
+
         // Load the private key from the environment variable
         uint256 avsPrivateKey = vm.envUint("PRIVATE_KEY_AVS");
         address avs = vm.addr(avsPrivateKey);
@@ -31,31 +30,42 @@ contract SetupAVSL1 is Script {
         console.log("AVS address:", avs);
 
         // 1. Update the AVS metadata URI
-        ALLOCATION_MANAGER.updateAVSMetadataURI(avs, "Test AVS");
-        console.log("AVS metadata URI updated: Test AVS");
+        allocationManager.updateAVSMetadataURI(avs, avsMetadataUri);
+        console.log("AVS metadata URI updated:", avsMetadataUri);
 
         // 2. Set the AVS Registrar
-        ALLOCATION_MANAGER.setAVSRegistrar(avs, IAVSRegistrar(taskAVSRegistrar));
-        console.log("AVS Registrar set:", address(ALLOCATION_MANAGER.getAVSRegistrar(avs)));
+        allocationManager.setAVSRegistrar(avs, IAVSRegistrar(taskAVSRegistrar));
+        console.log("AVS Registrar set:", address(allocationManager.getAVSRegistrar(avs)));
 
         // 3. Create the operator sets
         IStrategy[] memory strategies = new IStrategy[](2);
-        strategies[0] = STRATEGY_WETH;
-        strategies[1] = STRATEGY_STETH;
+        strategies[0] = strategyWeth;
+        strategies[1] = strategySteth;
         IAllocationManagerTypes.CreateSetParams[] memory createOperatorSetParams =
             new IAllocationManagerTypes.CreateSetParams[](2);
 
         IStrategy[] memory opsetZero = new IStrategy[](1);
-        opsetZero[0] = STRATEGY_WETH;
+        opsetZero[0] = strategyWeth;
         IStrategy[] memory opsetOne = new IStrategy[](1);
-        opsetOne[0] = STRATEGY_STETH;
+        opsetOne[0] = strategySteth;
 
         createOperatorSetParams[0] = IAllocationManagerTypes.CreateSetParams({operatorSetId: 0, strategies: opsetZero});
         createOperatorSetParams[1] = IAllocationManagerTypes.CreateSetParams({operatorSetId: 1, strategies: opsetOne});
 
-        ALLOCATION_MANAGER.createOperatorSets(avs, createOperatorSetParams);
-        console.log("Operator sets created: ", ALLOCATION_MANAGER.getOperatorSetCount(avs));
+        allocationManager.createOperatorSets(avs, createOperatorSetParams);
+        uint256 operatorSetCount = allocationManager.getOperatorSetCount(avs);
+        console.log("Operator sets created:", operatorSetCount);
 
         vm.stopBroadcast();
+
+        // Write setup results to JSON file
+        string memory json = "setup";
+        vm.serializeAddress(json, "avs", avs);
+        vm.serializeAddress(json, "taskAVSRegistrar", taskAVSRegistrar);
+        vm.serializeString(json, "avsMetadataUri", avsMetadataUri);
+        vm.serializeAddress(json, "strategyWeth", address(strategyWeth));
+        vm.serializeAddress(json, "strategySteth", address(strategySteth));
+        vm.writeJson(json, outputPath);
+        console.log("Setup results written to:", outputPath);
     }
 }

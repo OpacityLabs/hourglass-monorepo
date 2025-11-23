@@ -14,6 +14,7 @@ contract ConfigureOperatorSets is Script {
         address keyRegistrarAddress = vm.envAddress("KEY_REGISTRAR_ADDRESS");
         address avsAddress = vm.envAddress("AVS_ADDRESS");
         uint256 avsPrivateKey = vm.envUint("PRIVATE_KEY_AVS");
+        string memory outputPath = vm.envString("OUTPUT_JSON_PATH");
 
         IKeyRegistrar KEY_REGISTRAR = IKeyRegistrar(keyRegistrarAddress);
 
@@ -38,5 +39,12 @@ contract ConfigureOperatorSets is Script {
         vm.stopBroadcast();
 
         console.log("Successfully configured operator sets");
+
+        // Write configuration results to JSON file
+        string memory json = "config";
+        vm.serializeAddress(json, "avs", avsAddress);
+        vm.serializeAddress(json, "keyRegistrar", keyRegistrarAddress);
+        vm.writeJson(json, outputPath);
+        console.log("Configuration results written to:", outputPath);
     }
 }
