@@ -16,7 +16,6 @@ contract SetupAVSL1 is Script {
     function run() public {
         // Load addresses from environment variables
         IAllocationManager allocationManager = IAllocationManager(vm.envAddress("ALLOCATION_MANAGER_ADDRESS"));
-        IStrategy strategyWeth = IStrategy(vm.envAddress("STRATEGY_WETH_ADDRESS"));
         IStrategy strategySteth = IStrategy(vm.envAddress("STRATEGY_STETH_ADDRESS"));
         address taskAVSRegistrar = vm.envAddress("TASK_AVS_REGISTRAR_ADDRESS");
         string memory avsMetadataUri = vm.envString("AVS_METADATA_URI");
@@ -38,19 +37,15 @@ contract SetupAVSL1 is Script {
         console.log("AVS Registrar set:", address(allocationManager.getAVSRegistrar(avs)));
 
         // 3. Create the operator sets
-        IStrategy[] memory strategies = new IStrategy[](2);
-        strategies[0] = strategyWeth;
-        strategies[1] = strategySteth;
+        IStrategy[] memory strategies = new IStrategy[](1);
+        strategies[0] = strategySteth;
         IAllocationManagerTypes.CreateSetParams[] memory createOperatorSetParams =
-            new IAllocationManagerTypes.CreateSetParams[](2);
+            new IAllocationManagerTypes.CreateSetParams[](1);
 
         IStrategy[] memory opsetZero = new IStrategy[](1);
-        opsetZero[0] = strategyWeth;
-        IStrategy[] memory opsetOne = new IStrategy[](1);
-        opsetOne[0] = strategySteth;
+        opsetZero[0] = strategySteth;
 
         createOperatorSetParams[0] = IAllocationManagerTypes.CreateSetParams({operatorSetId: 0, strategies: opsetZero});
-        createOperatorSetParams[1] = IAllocationManagerTypes.CreateSetParams({operatorSetId: 1, strategies: opsetOne});
 
         allocationManager.createOperatorSets(avs, createOperatorSetParams);
         uint256 operatorSetCount = allocationManager.getOperatorSetCount(avs);
@@ -63,8 +58,7 @@ contract SetupAVSL1 is Script {
         vm.serializeAddress(json, "avs", avs);
         vm.serializeAddress(json, "taskAVSRegistrar", taskAVSRegistrar);
         vm.serializeString(json, "avsMetadataUri", avsMetadataUri);
-        vm.serializeAddress(json, "strategyWeth", address(strategyWeth));
-        vm.serializeAddress(json, "strategySteth", address(strategySteth));
+        vm.serializeAddress(json, "strategy", address(strategySteth));
         vm.writeJson(json, outputPath);
         console.log("Setup results written to:", outputPath);
     }
