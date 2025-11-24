@@ -37,8 +37,9 @@ contract ConfigureOperatorSets is Script {
         // Write configuration results to JSON file
         string memory json = "configOperatorSets";
         vm.serializeAddress(json, "avs", avsAddress);
-        vm.serializeAddress(json, "keyRegistrar", keyRegistrarAddress);
-        vm.writeJson(json, outputPath);
+        string memory finalJson = vm.serializeAddress(json, "keyRegistrar", keyRegistrarAddress);
+        vm.writeJson(finalJson, outputPath);
+
         console.log("Configuration results written to:", outputPath);
     }
 }
